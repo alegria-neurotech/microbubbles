@@ -28,6 +28,8 @@ class TrackingOptions:
     svd_high_cutoff: float | None = None
     svd_n_components: int | None = None
     svd_method: str = "fast"
+    knee_filter: bool = True
+    tissue_freq_hz: float = 100.0
     temporal_sigma: float = 0.0
     filter_method: str = "svd"
     min_distance: int = 2
@@ -640,6 +642,43 @@ def _finalize_track(track: dict) -> dict:
     return out
 
 
+def compute_zscore_knee(zscores: np.ndarray) -> float:
+    """Z-score value at the knee of the sorted z-score curve (2nd-derivative max).
+
+    Marks the transition from signal to noise so detections below it can be
+    dropped. Returns NaN if there are too few detections.
+    """
+    zscores = np.sort(np.asarray(zscores, dtype=np.float64))[::-1]
+    n = len(zscores)
+    if n < 100:
+        return float("nan")
+    smooth = gaussian_filter1d(zscores, sigma=max(1, n // 100))
+    d2 = np.gradient(np.gradient(smooth))
+    start = n // 20  # skip the top 5% outliers
+    knee_idx = int(np.argmax(d2[start:])) + start
+    return float(zscores[knee_idx])
+
+
+def _knee_filter_batch(batch: list, opts: TrackingOptions) -> list:
+    """Drop per-acquisition detections below the z-score knee (adaptive mode)."""
+    if not (opts.knee_filter and opts.svd_method == "adaptive"):
+        return batch
+    zs_all = [z for (_, _, z) in batch if len(z)]
+    if not zs_all:
+        return batch
+    knee = compute_zscore_knee(np.concatenate(zs_all))
+    if not np.isfinite(knee):
+        return batch
+    out = []
+    for pixels, intensities, zscores in batch:
+        if len(zscores):
+            mask = zscores >= knee
+            out.append((pixels[mask], intensities[mask], zscores[mask]))
+        else:
+            out.append((pixels, intensities, zscores))
+    return out
+
+
 def _filter_acquisition(compound: np.ndarray, opts: TrackingOptions) -> np.ndarray:
     if opts.filter_method == "none":
         mag = np.abs(compound).astype(np.float32, copy=False)
@@ -653,6 +692,8 @@ def _filter_acquisition(compound: np.ndarray, opts: TrackingOptions) -> np.ndarr
         method=opts.svd_method,
         temporal_sigma=opts.temporal_sigma,
         n_components=opts.svd_n_components,
+        frame_rate_hz=opts.frame_rate_hz,
+        tissue_freq_hz=opts.tissue_freq_hz,
     )
 
 
@@ -682,6 +723,7 @@ def _run_selected(opts: TrackingOptions, selected: list[int], output_path: Path)
                 min_distance=opts.min_distance,
                 smoothing_sigma=opts.smoothing_sigma,
             )
+            batch = _knee_filter_batch(batch, opts)
             print(f"[track] acq={acq_id} frames={filtered.shape[0]} shape={filtered.shape[1:]}")
             for frame_in_acq, (pixels, intensities, zscores) in enumerate(batch):
                 global_frame = acq_order * int(compound.shape[0]) + frame_in_acq
@@ -739,6 +781,8 @@ def _run_selected(opts: TrackingOptions, selected: list[int], output_path: Path)
             "svd_high_cutoff": opts.svd_high_cutoff,
             "svd_n_components": opts.svd_n_components,
             "svd_method": opts.svd_method,
+            "knee_filter": bool(opts.knee_filter),
+            "tissue_freq_hz": float(opts.tissue_freq_hz),
             "filter_method": opts.filter_method,
             "temporal_sigma": float(opts.temporal_sigma),
             "min_distance": int(opts.min_distance),
@@ -1004,6 +1048,8 @@ def make_options(args) -> TrackingOptions:
         svd_high_cutoff=args.svd_high_cutoff,
         svd_n_components=args.svd_n_components,
         svd_method=args.svd_method,
+        knee_filter=getattr(args, "knee_filter", True),
+        tissue_freq_hz=getattr(args, "tissue_freq_hz", 100.0),
         temporal_sigma=args.temporal_sigma,
         filter_method=args.filter_method,
         min_distance=args.min_distance,
