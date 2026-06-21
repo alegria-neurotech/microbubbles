@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>3D Staged ULM Viewer</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main id="app">
+      <div id="viewport"></div>
+      <section id="panel">
+        <div class="header">
+          <div>
+            <div class="eyebrow">microbubble review</div>
+            <div class="title">3D staged ULM</div>
+          </div>
+          <div id="frameText">0 / 0</div>
+        </div>
+        <div class="mode-row">
+          <div id="mode">raw/background</div>
+        </div>
+        <div id="status">Loading...</div>
+        <div class="stage-actions">
+          <button id="filter" type="button">filter for moving objects</button>
+          <button id="detect" type="button" disabled>detect</button>
+          <button id="track" type="button" disabled>track</button>
+        </div>
+        <div class="buttons">
+          <button id="play" type="button">Play</button>
+          <button id="prev" type="button" title="Previous frame">Prev</button>
+          <button id="next" type="button" title="Next frame">Next</button>
+        </div>
+        <label class="control wide">
+          <span>Frame</span>
+          <input id="frame" type="range" min="0" max="0" value="0" />
+        </label>
+        <div class="compact-row">
+        <label class="control">
+          <span>FPS</span>
+          <input id="fps" type="number" min="1" max="120" value="30" />
+        </label>
+          <label class="check">
+            <input id="showTracks" type="checkbox" checked />
+            <span>Tracks</span>
+          </label>
+          <label class="check">
+            <input id="autoRotate" type="checkbox" />
+            <span>Auto</span>
+          </label>
+        </div>
+        <label class="control wide">
+          <span>
+            Track tail
+            <output id="tailValue">18</output>
+          </span>
+          <input id="tail" type="range" min="0" max="80" value="18" />
+        </label>
+        <label class="control wide">
+          <span>
+            Point glow
+            <output id="pointSizeValue">1.9</output>
+          </span>
+          <input id="pointSize" type="range" min="0.6" max="6" step="0.1" value="1.9" />
+        </label>
+      </section>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
