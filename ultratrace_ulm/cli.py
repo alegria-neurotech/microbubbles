@@ -13,6 +13,7 @@ from .tracking import (
     smooth_tracks_pickle,
 )
 from .track_viewer_export import write_track_viewer
+from .launcher_export import parse_viewer_spec, write_launcher
 from .video_export import export_svd_video, make_options as make_video_options
 from .volume_export import export_svd_volume, make_options as make_volume_options
 
@@ -156,6 +157,17 @@ def cmd_track_viewer(args: argparse.Namespace) -> None:
         use_smoothed=not args.raw,
         beamformed=Path(args.beamformed).expanduser().resolve() if args.beamformed else None,
         svd_cutoff=args.svd_cutoff,
+    )
+
+
+def cmd_launcher(args: argparse.Namespace) -> None:
+    viewers = [parse_viewer_spec(spec) for spec in args.viewer]
+    write_launcher(
+        Path(args.output_dir).expanduser().resolve(),
+        title=args.title,
+        subtitle=args.subtitle,
+        footer=args.footer,
+        viewers=viewers,
     )
 
 
@@ -349,6 +361,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="SVD low cutoff for intensity lookup (0 = raw magnitude).",
     )
     p.set_defaults(func=cmd_track_viewer)
+
+    p = sub.add_parser(
+        "launcher",
+        help="Write a landing page (index.html + viewers.json) linking viewer bundles.",
+    )
+    p.add_argument("--output-dir", required=True)
+    p.add_argument("--title", default="Ultratrace ULM Viewers")
+    p.add_argument("--subtitle", default="")
+    p.add_argument("--footer", default="")
+    p.add_argument(
+        "--viewer",
+        action="append",
+        default=[],
+        metavar="HREF|TITLE|DESC|EMOJI",
+        help="Repeatable viewer card: relative href plus optional title, description, emoji.",
+    )
+    p.set_defaults(func=cmd_launcher)
 
     p = sub.add_parser("doctor", help="Check runtime imports.")
     p.set_defaults(func=cmd_doctor)

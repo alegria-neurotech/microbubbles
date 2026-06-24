@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ULM Viewers</title>
+<style>
+  body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#0b0d12;color:#e7ecf3}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 24px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:#8b97a8;margin:0 0 32px;font-size:14px}
+  a.card{display:block;text-decoration:none;color:inherit;background:#151924;border:1px solid #232a39;border-radius:12px;padding:20px 22px;margin:14px 0;transition:.15s}
+  a.card:hover{border-color:#3a82f6;background:#19202e}
+  .card h2{margin:0 0 4px;font-size:18px;color:#fff}
+  .card p{margin:0;color:#9aa6b6;font-size:14px}
+  .meta{margin-top:36px;padding-top:20px;border-top:1px solid #232a39;color:#717d8e;font-size:13px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 id="title">ULM Viewers</h1>
+    <p class="sub" id="subtitle"></p>
+    <div id="cards"></div>
+    <div class="meta" id="footer"></div>
+  </div>
+  <script>
+    fetch("viewers.json").then(function (r) { return r.json(); }).then(function (cfg) {
+      var title = cfg.title || "ULM Viewers";
+      document.title = title;
+      document.getElementById("title").textContent = title;
+      var sub = document.getElementById("subtitle");
+      if (cfg.subtitle) { sub.textContent = cfg.subtitle; } else { sub.style.display = "none"; }
+      var cards = document.getElementById("cards");
+      (cfg.viewers || []).forEach(function (v) {
+        var a = document.createElement("a");
+        a.className = "card";
+        a.href = v.href;
+        var h = document.createElement("h2");
+        h.textContent = (v.emoji ? v.emoji + " " : "") + (v.title || v.href);
+        a.appendChild(h);
+        if (v.description) {
+          var p = document.createElement("p");
+          p.textContent = v.description;
+          a.appendChild(p);
+        }
+        cards.appendChild(a);
+      });
+      var f = document.getElementById("footer");
+      if (cfg.footer) { f.textContent = cfg.footer; } else { f.style.display = "none"; }
+    }).catch(function (e) {
+      document.getElementById("cards").textContent = "Failed to load viewers.json: " + e;
+    });
+  </script>
+</body>
+</html>

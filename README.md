@@ -75,3 +75,43 @@ repository, and validates the runtime and bundled web assets. See
 ## License
 
 [MIT](LICENSE) — © 2026 Aleph Neuro.
+
+## Combined Viewer Launcher
+
+Serve several viewer bundles behind one link. After exporting the `volume`,
+`track-viewer`, and `movie` bundles into a shared directory, write a landing
+page that links them:
+
+```bash
+ultratrace-ulm launcher \
+  --output-dir outputs/viewer \
+  --title "Ultratrace ULM" \
+  --subtitle "feb10 15:35 - adaptive SVD" \
+  --viewer "volume/|3D SVD Volume Viewer|Rotatable super-resolution volume.|ð§" \
+  --viewer "tracks3d/|3D Track-Flow Viewer|Animated point-flow of tracks.|â¨" \
+  --viewer "movie/|SVD B-mode Movie Viewer|SVD b-mode movie with overlay.|ðï¸"
+```
+
+This writes `index.html` + `viewers.json`; serve the directory with any static
+server. Each `--viewer` is `HREF|TITLE|DESCRIPTION|EMOJI` (only the href is
+required) and may be repeated.
+
+## Recommended Tracking Recipe (read before using --temporal-sigma)
+
+For non-stationary microbubble tracks, prefer **adaptive SVD with
+`--temporal-sigma 0`** over the temporal-blur recipe above:
+
+```bash
+ultratrace-ulm run \
+  --beamformed /path/to/beamformed.h5 --tracks outputs/tracks.pkl \
+  --svd-method adaptive --frame-rate <Hz> --knee-filter \
+  --temporal-sigma 0 --sigma-threshold 2.0 --svd-low-cutoff 0.1 \
+  --min-distance 2 --smoothing-sigma 1.0 --tracking kalman \
+  --max-gap 3 --min-track-length 5 --max-cost 10
+```
+
+A large `--temporal-sigma` (e.g. 7) combined with the `fast` SVD variant tends
+to track stationary tissue/clutter: it yields many more tracks per acquisition
+that barely move. Adaptive SVD with no temporal blur matches the production
+reference (~260 tracks/acquisition, genuinely flowing). See
+`scripts/reproduce_feb10_1535_viewer.sh` for an end-to-end example.
