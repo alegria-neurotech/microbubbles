@@ -25,6 +25,18 @@ python3.11 -m venv .venv
 .venv/bin/pip install -e ".[mach]"     # + GPU MACH beamforming (CUDA)
 ```
 
+## Sample data
+
+A sanitized neutral ultratrace — demodulated IQ plus transmit delays and a
+beamforming-only config (no raw frames, no device metadata) — is hosted on
+Cloudflare R2 (~98 GB, 223 acquisitions):
+
+```bash
+curl -O https://pub-9c1be6312b2441eb8732660783d9ee81.r2.dev/sanitized_neutral_ultratrace.h5
+```
+
+Feed it straight into `beamform` below.
+
 ## Beamform (optional, GPU)
 
 ```bash
