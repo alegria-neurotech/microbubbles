@@ -78,12 +78,6 @@ ultratrace-ulm volume --beamformed beamformed.h5 --tracks outputs/tracks_smoothe
 
 Serve any viewer directory with a static file server (`python3 -m http.server`).
 
-## Reproducibility
-
-`scripts/check_repro.sh` builds a fresh virtualenv, installs only this
-repository, and validates the runtime and bundled web assets. See
-[`REPRODUCIBILITY.md`](REPRODUCIBILITY.md).
-
 ## License
 
 [MIT](LICENSE) — © 2026 Aleph Neuro.
@@ -125,5 +119,4 @@ ultratrace-ulm run \
 A large `--temporal-sigma` (e.g. 7) combined with the `fast` SVD variant tends
 to track stationary tissue/clutter: it yields many more tracks per acquisition
 that barely move. Adaptive SVD with no temporal blur matches the production
-reference (~260 tracks/acquisition, genuinely flowing). See
-`scripts/reproduce_feb10_1535_viewer.sh` for an end-to-end example.
+reference (~260 tracks/acquisition, genuinely flowing).
